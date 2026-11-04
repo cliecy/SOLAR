@@ -1,0 +1,66 @@
+{
+  "bundle_sha256": "bfab354c420ff7c9954d900c5ac385b1ed8a6c8b7bd1869e5ce6d18b7d096d57",
+  "locked_files": {
+    "shared_splits/immune_cell_human/heldout_10X/outer.csv": "2975a2b3a12b90c61411575384d9446f625142c0bf22b068dea10cd07705d22a",
+    "preprocessing/immune_cell_human/heldout_10X/hvg2000.txt": "16ae94b29535d8558d3fd2055358c7516c062b70cfdad26c263fa5dfe02f1ff8",
+    "shared_splits/immune_cell_human/heldout_Oetjen_A/outer.csv": "c41cc5ee784d926cf7520b9f90825e50f950b8ed3a9940f8f0fd21bfc810945d",
+    "preprocessing/immune_cell_human/heldout_Oetjen_A/hvg2000.txt": "871c3759a88ebced8d5d5adcd7a3a9bf773b8e47f38b016265b40724b08c0d74",
+    "shared_splits/immune_cell_human/heldout_Villani/outer.csv": "dc8d30a5db9a5405dedecac0cea0155ffdf4686d0a0961691dad600cd9eed330",
+    "preprocessing/immune_cell_human/heldout_Villani/hvg2000.txt": "d3b2b43a2f178bbd871f0f4d6d3f8092d15089bc25014a25626b4115ea8f8b8a",
+    "shared_splits/lung_atlas/heldout_3/outer.csv": "d24ead254fc92bd583b14e4dba1348ee3c97aeca1459b5bf1fa8814ae3c86f5f",
+    "preprocessing/lung_atlas/heldout_3/hvg2000.txt": "78ba3cc815fc593f7bfab488ceeb6bacf51ba199986527cdb6f4a727a5f3a8ad",
+    "shared_splits/lung_atlas/heldout_4/outer.csv": "91e48c40ea971d12b4c5e8c0689569c95d432483b6a29282236930f0a75fa80b",
+    "preprocessing/lung_atlas/heldout_4/hvg2000.txt": "966afa0fd3d5b2c0b0f0ded9e29d0a1f1c8cab40223041eac8d61e8dbd340851",
+    "shared_splits/lung_atlas/heldout_B1/outer.csv": "e7e655881758bd7d1c56754a6d931a0fa02c5bc7391732cfe3828cb0066f742d",
+    "preprocessing/lung_atlas/heldout_B1/hvg2000.txt": "81bbe284ee51a36f1960fafdcfef735078d3dcf81949021b2f5a07f47938bbfd",
+    "shared_splits/pancreas/heldout_fluidigmc1/outer.csv": "83b8a360ac0c84916d652c88de9e844ad3758c48ff3abf802942fc5f3f62d3ee",
+    "preprocessing/pancreas/heldout_fluidigmc1/hvg2000.txt": "c458efff9bf5a5a5573084a0dda172b4342ee95a8ce721fdeb278ca505870aa4",
+    "shared_splits/pancreas/heldout_inDrop2/outer.csv": "35f7575f87c3d7d9f07307636e8c4e5fc35e46ad2ec44eca731a3c7c78af4981",
+    "preprocessing/pancreas/heldout_inDrop2/hvg2000.txt": "df752c3eb4097ca28fd2e62545b940508e43e9fb85f32d6cc0ebddf920e6fc72",
+    "shared_splits/pancreas/heldout_inDrop3/outer.csv": "006c41d60594c410cb836753184f53a3baa90c4b85dc3b91a4e17298de56f995",
+    "preprocessing/pancreas/heldout_inDrop3/hvg2000.txt": "a69608c975649a765d6c67d215de237ef203140b02d14c66c364dda9ad4e6fca"
+  },
+  "recorded_methods": [
+    [
+      "frozen_reference_scanvi",
+      30
+    ],
+    [
+      "frozen_reference_scvi",
+      30
+    ],
+    [
+      "sclsc_refonly",
+      16
+    ],
+    [
+      "sclsc_refonly",
+      30
+    ],
+    [
+      "solar_none",
+      128
+    ],
+    [
+      "solar_orthogonal",
+      30
+    ],
+    [
+      "solar_orthogonal",
+      128
+    ],
+    [
+      "solar_orthogonal_uniq",
+      128
+    ],
+    [
+      "unintegrated_pca_matched",
+      30
+    ],
+    [
+      "unintegrated_pca_matched",
+      40
+    ]
+  ],
+  "no_completed_gaussian_or_learnable_in_release": true
+}
