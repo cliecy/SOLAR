@@ -3,7 +3,7 @@ message: "If you use this software, please cite the SOLAR manuscript."
 title: "SOLAR: Fixed orthogonal label anchors for single-cell reference mapping"
 version: 1.0.0
 license: MIT
-repository-code: "https://github.com/cliecy/SOLAR-fixed-orthogonal-label-anchors-for-single-cell-reference-mapping"
+repository-code: "https://github.com/cliecy/SOLAR"
 authors:
   - family-names: Chen
     given-names: Minqi
