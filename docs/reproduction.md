@@ -90,7 +90,7 @@ Processed input files, immutable checksums and source URLs are recorded in
 `configs/scib_datasets.yaml` (scIB Figshare record 12420968, version 8, CC BY 4.0).
 The existing repository's `v1.0` release provides historical result and model
 attachments, including splits, genes, embeddings and checkpoints. See
-https://github.com/cliecy/SOLAR-fixed-orthogonal-label-anchors-for-single-cell-reference-mapping/releases/tag/v1.0.
+https://github.com/cliecy/SOLAR/releases/tag/v1.0.
 The historical upstream SCLSC revision is
 `yaozhong/SCLSC@2e827dfebb793dffb548fd297e5c4e70fa40692f` and is not redistributed.
 
