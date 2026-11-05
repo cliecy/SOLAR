@@ -1,0 +1,7 @@
+{
+  "scripts/score_experiment_v1_2.py": "            n_hvg=2000, hvg_flavor=\"seurat\", batch_aware=False, n_components=30,\n    classifier = KNeighborsClassifier(n_neighbors=15, weights=\"distance\", metric=\"minkowski\", p=2, n_jobs=1)\n                value = float(trustworthiness(source[mask][sample], emb[sample], n_neighbors=15, metric=\"euclidean\"))",
+  "scripts/paper_scib_worker.py": "                k0=90,",
+  "scripts/biovalid_ref_query_joint.py": "        if n < 10:\n    if valid.sum() < k + 1:\n    nn = NearestNeighbors(n_neighbors=k_eff + 1).fit(embedding)\n    neighbor_mean_pt = pseudotime[indices[:, 1:]].mean(axis=1)",
+  "adapters/sclsc_v1_1.py": "from sklearn.model_selection import StratifiedShuffleSplit\n    matrix = subset.X\n    splitter = StratifiedShuffleSplit(\n    class_representatives = np.stack(\n    parser.add_argument(\"--validation-fraction\", type=float, default=0.1)\n    parser.add_argument(\"--patience\", type=int, default=10)\n        \"restore_best_checkpoint\": False,\n    if internal[\"implementation\"] != \"sklearn.model_selection.StratifiedShuffleSplit\":\n                    \"2,000-HVG normalized-X input contract is used for every method.\"\n                    \"implementation\": \"sklearn.model_selection.StratifiedShuffleSplit\",\n                    \"restore_best_checkpoint\": False,",
+  "src/scib_benchmark/data.py": "def select_reference_hvgs(\n    dataset_path: Path,\n    split: pd.DataFrame,\n    batch_key: str,\n    n_top_genes: int,\n    flavor: str = \"cell_ranger\",\n) -> list[str]:\n    pass\n"
+}

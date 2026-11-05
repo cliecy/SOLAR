@@ -65,8 +65,12 @@ evaluation:
     sample_seed: 0
     max_cells_per_label: 8000
     fields:
-      immune_cell_human: [study, sample_ID]
-      lung_atlas: [donor, patientGroup]
+      immune_cell_human:
+      - study
+      - sample_ID
+      lung_atlas:
+      - donor
+      - patientGroup
 aggregation:
   required_seed_count: 5
   sample_sd_ddof: 1
@@ -75,14 +79,5 @@ aggregation:
   within_dataset_weighting: equal_common_valid_batches
   missing_policy: paired_nonmissing_batches_no_zero_imputation
   independent_biological_replicates: false
-bundle_dir: release/bundle
-attachment_dir: release/attachments
-bootstrap_record: release/bootstrap.json
-data_dir: data/scib/raw
-output_root: work/v1_2
-mode: released
-solar_python: environments/solar/.venv/bin/python
-sclsc_python: environments/sclsc-v1_1/.venv/bin/python
-analysis_python: environments/analysis/.venv/bin/python
 solar_config: configs/benchmark_v1_2_dim30.yaml
 dataset_manifest: configs/scib_datasets.yaml
