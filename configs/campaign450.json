@@ -1,0 +1,57 @@
+{
+  "datasets": {
+    "pancreas": [
+      "fluidigmc1",
+      "inDrop2",
+      "inDrop3"
+    ],
+    "immune_cell_human": [
+      "10X",
+      "Oetjen_A",
+      "Villani"
+    ],
+    "lung_atlas": [
+      "3",
+      "4",
+      "B1"
+    ]
+  },
+  "seeds": [
+    40,
+    41,
+    42,
+    43,
+    44
+  ],
+  "arms_d30": [
+    "repeated",
+    "unique",
+    "none",
+    "gaussian",
+    "learnable",
+    "hierarchy",
+    "local",
+    "hierarchy_local"
+  ],
+  "arms_d128": [
+    "gaussian",
+    "learnable"
+  ],
+  "preprocessing": {
+    "n_hvg": 2000,
+    "n_pca": 40,
+    "fit_population": "outer_reference"
+  },
+  "width_binding": "Explicit embedding_dim override in variant model_kwargs; TrainConfig alone does not override it.",
+  "extension": {
+    "hierarchy_gram": "0.5 I + 0.5 C C^T; internal-training normalized class centers",
+    "local_weight": 0.1,
+    "neighbors": 15,
+    "temperature": 0.07
+  },
+  "source_sha256": {
+    "run.py": "5895b563cbcc4fda2d4028b5251606d83da13229ef678715383cd65d47f83574",
+    "aggregate.py": "2c120d25ed60ed89e917214f6cb0943e65861ff6d239a8899e2cfcab2e9f9cc3",
+    "reference_selection.py": "5942a0383b83900329e8efd118e0176bb183a5ddfff312988bc28712cbe1cd91"
+  }
+}

@@ -1,24 +1,17 @@
-name: verify-paper-numbers
+name: verify-release
 on: [push, pull_request]
+# Fixed commands only; no event payload is interpolated into the shell.
 jobs:
-  verify:
+  replay:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install pandas numpy pyyaml scikit-learn matplotlib pytest anndata h5py
-      - run: pip install torch --index-url https://download.pytorch.org/whl/cpu
-      - run: sha256sum -c MANIFEST.sha256
-      - run: python scripts/verify_paper_numbers.py --report verification_report.csv
-      - run: python -m pytest -q tests
-      - run: PYTHONPATH=src python scripts/audit_solar_numerics.py
-      - run: PYTHONPATH=src python examples/smoke_test.py
-      - run: python scripts/build_paper_figures.py --output-dir rebuilt/figures
+      - run: python -m pip install -r requirements-replay.txt
+      - run: python scripts/verify_release.py --output rebuilt
       - uses: actions/upload-artifact@v4
         with:
-          name: verification
-          path: |
-            verification_report.csv
-            rebuilt/figures
+          name: reconstructed-results
+          path: rebuilt/

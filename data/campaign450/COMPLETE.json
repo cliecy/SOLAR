@@ -1,0 +1,36 @@
+{
+  "state": "completed",
+  "required": 450,
+  "training_complete": 450,
+  "annotation_complete": 450,
+  "official_local_complete": 450,
+  "selection_groups": 45,
+  "failed": 0,
+  "selection_rule": "Maximum reference-validation macro-F1; protocol arm-order ties; all eight D30 arms required",
+  "disclosure": "Revision benchmark previously inspected; selection added after initial query scoring; no query outcome enters selector. All candidates reported. Not an unseen confirmatory evaluation.",
+  "uncertainty": "Exact within-dataset paired batch percentile bootstrap; equal dataset weights; five seeds averaged first; descriptive unadjusted intervals; source datasets fixed; overlapping references.",
+  "scientific_question": "Does class-anchor geometry or repetition explain label separation, and can reference-derived geometry/local preservation improve the annotation/local-structure tradeoff?",
+  "derived_sha256": {
+    "metrics.csv": "8971d8d3dc2c3d9714f2435400f5fdb6d593d485415c707f59fa59a823485e26",
+    "validation_selection.csv": "b3420a020b1f3907b89c87c162bd17645a898be6442eb472e8b4961780c1b94d",
+    "batch_means.csv": "153c17052a790614ecc6858908481c1df3e30dae47cd564b32f2f82ab3e39100",
+    "endpoint_coverage.csv": "9bf4bc5b6e11e114c0ee1d12c102b1f0aff6e50a48bf105e4e505855f2df1485",
+    "arm_summary.csv": "aab7d6b7f9b945db4210043f45035abef6f20af2ceb9b1e160d1cb476210a2f9",
+    "paired_batch_uncertainty.csv": "0f1d748d81378c92b8ca77b62541c0dff63d7f198d0613f7e4e7712ff133af54",
+    "paired_batch_differences.csv": "599b250a0828674e3f21dfa18c03625cf32952a13f239993e102714c224a8bc4",
+    "validation_candidates.csv": "2bf59e8eac400a1ddde560c27d18a521d94858b44f3d2280182b97baab5b9417",
+    "run_ledger.csv": "6614ed34aef152e03eb5a47fa97b733d6abbe5d6a0deb2eae8532a1d60e82518"
+  },
+  "source_derived_sha256": {
+    "arm_summary.csv": "aab7d6b7f9b945db4210043f45035abef6f20af2ceb9b1e160d1cb476210a2f9",
+    "batch_means.csv": "153c17052a790614ecc6858908481c1df3e30dae47cd564b32f2f82ab3e39100",
+    "endpoint_coverage.csv": "9bf4bc5b6e11e114c0ee1d12c102b1f0aff6e50a48bf105e4e505855f2df1485",
+    "metrics.csv": "8971d8d3dc2c3d9714f2435400f5fdb6d593d485415c707f59fa59a823485e26",
+    "paired_batch_differences.csv": "599b250a0828674e3f21dfa18c03625cf32952a13f239993e102714c224a8bc4",
+    "paired_batch_uncertainty.csv": "0f1d748d81378c92b8ca77b62541c0dff63d7f198d0613f7e4e7712ff133af54",
+    "run_ledger.csv": "6614ed34aef152e03eb5a47fa97b733d6abbe5d6a0deb2eae8532a1d60e82518",
+    "validation_candidates.csv": "15f1b98b518e680d21e89aaf3208556b4effdd999da2f46b7dd4b7c1adcdd6ff",
+    "validation_selection.csv": "b3420a020b1f3907b89c87c162bd17645a898be6442eb472e8b4961780c1b94d"
+  },
+  "projection": "validation_candidates.csv omits only the machine-specific run column; all numerical and scientific fields are preserved."
+}

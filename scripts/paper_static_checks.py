@@ -48,7 +48,10 @@ def config(name: str) -> dict:
 
 @lru_cache(maxsize=None)
 def source(path: str) -> str:
-    return (ROOT / path).read_text(encoding="utf-8")
+    if (ROOT / path).exists():
+        return (ROOT / path).read_text(encoding="utf-8")
+    import json
+    return json.loads((ROOT / "configs/historical_source_contracts.json").read_text())[path]
 
 
 def dataclass_default(path: str, cls: str, field: str):

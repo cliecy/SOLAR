@@ -41,7 +41,6 @@ evaluation:
     backend: paper_scib_0_2_0
     scib_commit: e2a37e0ed63dc34b60aa535cc656400552af757a
     kbet_commit: afc5f431bcbefd73267acc066a0f2e4eaa10a355
-    environment_manifest: environments/scib-paper/pixi.toml
     output_type: embed
     neighbors: 15
     lisi_subsample_percent: 50
@@ -73,14 +72,11 @@ evaluation:
         assay: simulation
         organism: null
 dataset_manifest: configs/scib_datasets.yaml
-output_root: work/v1_2
 datasets:
 - immune_cell_human
 - lung_atlas
 - pancreas
 solar:
-  package_root: src/SOLAR
-  python: environments/solar/.venv/bin/python
   train:
     hidden_dim: 512
     embedding_dim: 30
