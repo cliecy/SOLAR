@@ -11,6 +11,13 @@ jobs:
           python-version: "3.12"
       - run: python -m pip install -r requirements-replay.txt
       - run: python scripts/verify_release.py --output rebuilt
+      - name: Replay four-experiment follow-up and frozen450 controls
+        working-directory: experiments/four405
+        run: |
+          python -m pip install -r requirements.txt
+          python replay.py --root .
+          python scripts/replay_old450.py --inputs evidence/old450 --output replayed-old450
+          python scripts/verify_release.py
       - uses: actions/upload-artifact@v4
         with:
           name: reconstructed-results

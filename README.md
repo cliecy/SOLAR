@@ -7,8 +7,31 @@ way to study how label-anchor geometry and repetition shape cell-type separation
 annotation and local biological structure.
 
 The benchmark combines three single-cell datasets, nine held-out batches and five
-model seeds. The latest 450-fit comparison includes eight matched 30D arms plus
-Gaussian and learnable anchors at 128D. Its results clarify the tradeoff:
+model seeds. The new **405-record follow-up** adds matched128 orthogonal controls,
+best-checkpoint SCLSC with gene/PCA40 inputs, unique+local controls and whole-type-out
+immune rejection. The original450 runs remain preserved as paired comparators.
+
+- At128 dimensions, repeated orthogonal query macro-F1 is **0.81240**, versus
+  **0.81127** for Gaussian and **0.80772** for learnable anchors. Both paired
+  annotation intervals include zero; orthogonality does not establish an annotation gain.
+- Best-checkpoint SCLSC gene/PCA40 has joint label ASW **0.94618/0.88990**, above
+  SOLAR30 **0.87341**; query F1 is **0.78627/0.78669** versus **0.81111**, with
+  paired differences crossing zero. Balanced-accuracy point estimates favor SCLSC.
+- Unique+local0.1 raises joint trustworthiness from **0.92691 to0.93172** versus
+  unique30, but query trustworthiness changes only **0.93954 to0.94019** across
+  six eligible batches. Query F1 changes **0.81131 to0.80999**, without an established gain.
+- In whole-type-out mapping, SOLAR common-distance AUROC is **0.95507** for
+  omitted B cells and **0.45535** for CD16 monocytes. Native cosine AUROC is
+  **0.86706/0.45186**. B-cell unknown endpoints cover two batches, known endpoints
+  three; reference5% calibration does not guarantee query5% false rejection.
+
+[Follow-up quick start and complete evidence](experiments/four405/README.md) reproduce
+all405 saved records, the original222 complete-panel intervals and420 contrasts
+with endpoint-specific coverage. [Full scientific results](docs/four405-results.md)
+retain native/common scores, false rejection, negative findings and all controls.
+
+The original450-fit comparison includes eight matched30D arms plus Gaussian and
+learnable anchors at128D. Its historical results clarify the tradeoff:
 
 - Fixed Gaussian anchors reach query macro-F1 **0.8184**, versus **0.8111** for
   repeated orthogonal anchors at 30D. The paired difference is **+0.0072**
