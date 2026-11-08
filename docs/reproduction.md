@@ -3,8 +3,8 @@
 The release reconstructs numerical analyses from frozen per-run scores. It covers
 the final 450-fit campaign tables (the manuscript's added matched-control analyses),
 the historical baseline/dimension/anchor comparisons, historical paired uncertainty
-and historical quantitative Figures 2–4 and S2–S5. Figure 5's numerical endpoints
-are in the campaign summaries; its manuscript artwork is distributed separately.
+and historical quantitative Figures 2–4 and S2–S5. The matched-tradeoffs figure (Figure 3 of the revised manuscript) is rebuilt by
+`scripts/make_fig3_matched_tradeoffs.py` from the campaign and follow-up summaries.
 The original manuscript and supplement are separately distributed documents.
 
 ## One environment and verification command
@@ -21,15 +21,20 @@ missing value and numeric field with its frozen reference, at absolute tolerance
 | 450-fit batch means, endpoint coverage, summaries, paired differences and intervals, reference-validation selection | `scripts/replay_campaign.py --output rebuilt/campaign450` | `data/campaign450/{metrics,run_ledger,validation_candidates}.csv` | Seven regenerated CSVs against `data/campaign450/` |
 | Historical method, dimension and anchor comparisons, dataset and overall summaries, leave-one-dataset-out results | `scripts/build_experiment_v1_2_tables.py --input-dir data/heldout --output-dir rebuilt/historical` | `data/heldout/{runs,metrics}.csv` | All seven `data/heldout/tables/*.csv` |
 | Historical paired batch uncertainty | `scripts/replay_historical_uncertainty.py --output rebuilt/historical_uncertainty` | `data/heldout/{runs,metrics}.csv` | Both `data/historical_uncertainty/*.csv` |
-| Historical number ledger | `scripts/verify_paper_numbers.py --report rebuilt/historical_claims.csv` | `paper/`, historical score records, configs and source contracts | Printed precision and explicit discrepancy ledger |
+| Manuscript number ledgers, historical and revision | `scripts/verify_paper_numbers.py --report rebuilt/historical_claims.csv` | `paper/`, historical score records, `data/campaign450`, `data/historical_uncertainty`, `experiments/four405`, configs and source contracts | Printed precision and explicit discrepancy ledger |
+| Matched-tradeoffs figure (revised manuscript Figure 3) | `scripts/make_fig3_matched_tradeoffs.py --output-dir rebuilt/figures` | `experiments/four405/evidence/new405/arm_summary.csv`, `data/campaign450/arm_summary.csv` | Plotted values are the ledger-checked Table 4, S11 and S14 means |
 | Historical quantitative figures | `scripts/build_paper_figures.py --output-dir rebuilt/figures` | Historical score records and Villani predictions | Numerical values checked by the historical ledger; PDF/PNG rendering is exercised, not compared pixelwise |
 
-The ledger contains 5,207 entries: 5,206 match and one documented version-label
-discrepancy remains (`sitext-0121`, `paper/known_discrepancies.csv`). Its locations
-refer to the earlier manuscript layout. It is retained as a historical check;
-it is not a token-coverage assertion for the revised 23-page manuscript or 47-page
-supplement. Revised campaign analyses are checked directly against the final frozen
-CSV records. No test here establishes independent scientific validation.
+The four historical ledgers contain 5,207 entries whose locations follow the
+original submission's layout. `paper/claims_revision.csv` adds 3,375 entries from
+the revised manuscript: Tables 4 and 5, Tables S10–S16 and the revised prose,
+evaluated against `data/campaign450`, `data/historical_uncertainty` and
+`experiments/four405`. All 8,582 entries match and `paper/known_discrepancies.csv`
+is empty. `scripts/build_revision_ledger.py` records how the revision ledger was
+derived from the LaTeX sources, which are not distributed; it copies each printed
+string from the source and never recomputes it. Counting entries is not a
+token-coverage assertion for the manuscript. No test here establishes independent
+scientific validation.
 
 ## Populations, controls and uncertainty
 

@@ -259,3 +259,106 @@ def load_json(path: Path) -> dict:
     opener = gzip.open if path.suffix == ".gz" else open
     with opener(path, "rt", encoding="utf-8") as handle:
         return json.load(handle)
+
+
+# ---------------------------------------------------------------------------
+# Revision records: the 450-fit matched campaign, the 405-record follow-up and
+# the historical paired uncertainty. These are frozen aggregate CSVs; the
+# per-run replays in ``replay_campaign.py`` and ``experiments/four405/replay.py``
+# regenerate them from per-run scores and are compared at 1e-12.
+# ---------------------------------------------------------------------------
+CAMPAIGN = DATA / "campaign450"
+FOUR405 = ROOT / "experiments" / "four405"
+HISTORICAL_UNCERTAINTY = DATA / "historical_uncertainty"
+
+
+@lru_cache(maxsize=None)
+def campaign_arms() -> pd.DataFrame:
+    return pd.read_csv(CAMPAIGN / "arm_summary.csv")
+
+
+@lru_cache(maxsize=None)
+def campaign_intervals() -> pd.DataFrame:
+    return pd.read_csv(CAMPAIGN / "paired_batch_uncertainty.csv")
+
+
+@lru_cache(maxsize=None)
+def followup_arms() -> pd.DataFrame:
+    frame = pd.read_csv(FOUR405 / "evidence" / "new405" / "arm_summary.csv")
+    return frame[frame.omission.isna()].reset_index(drop=True)
+
+
+@lru_cache(maxsize=None)
+def followup_intervals() -> pd.DataFrame:
+    frame = pd.read_csv(FOUR405 / "expected" / "all_eligible_paired_intervals.csv")
+    return frame[frame.omission.isna()].reset_index(drop=True)
+
+
+@lru_cache(maxsize=None)
+def followup_records() -> pd.DataFrame:
+    return pd.read_csv(FOUR405 / "evidence" / "new405" / "records405.csv")
+
+
+@lru_cache(maxsize=None)
+def historical_intervals() -> pd.DataFrame:
+    return pd.read_csv(HISTORICAL_UNCERTAINTY / "paired_batch_uncertainty.csv")
+
+
+@lru_cache(maxsize=None)
+def unknown_summary() -> pd.DataFrame:
+    return pd.read_csv(FOUR405 / "evidence" / "unknown90" / "summary.csv")
+
+
+@lru_cache(maxsize=None)
+def unknown_paired() -> pd.DataFrame:
+    return pd.read_csv(FOUR405 / "evidence" / "unknown90" / "paired.csv")
+
+
+def _one(frame: pd.DataFrame, **conditions) -> pd.Series:
+    hit = frame
+    for column, value in conditions.items():
+        hit = hit[hit[column] == value]
+    if len(hit) != 1:
+        raise KeyError(f"expected exactly one record for {conditions}, found {len(hit)}")
+    return hit.iloc[0]
+
+
+def arm_row(source: str, arm: str, dim: int, metric: str, population: str) -> pd.Series:
+    """Dataset-equal mean with dataset/batch coverage for one configuration and endpoint."""
+    frame = {"campaign450": campaign_arms, "four405": followup_arms}[source]()
+    return _one(frame, arm=arm, dimension=int(dim), metric=metric, population=population)
+
+
+def interval_row(source: str, left: str, right: str, dim: int, metric: str, population: str) -> pd.Series:
+    """Paired difference (left minus right) with its exact dataset-stratified bootstrap interval."""
+    if source == "campaign450":
+        return _one(campaign_intervals(), left=left, right=right, dimension=int(dim), metric=metric, population=population)
+    if source == "four405":
+        return _one(followup_intervals(), left=left, right=right, left_dimension=int(dim), metric=metric, population=population)
+    if source == "historical":
+        return _one(historical_intervals(), contrast=left, metric=metric, population=population)
+    raise ValueError(f"unknown interval source {source!r}")
+
+
+def unknown_row(arm: str, omission: str, confidence: str, percentile: int) -> pd.Series:
+    return _one(unknown_summary(), arm=arm, omission=omission, confidence=confidence, percentile=int(percentile))
+
+
+def unknown_interval_row(left: str, right: str, omission: str, percentile: int, metric: str) -> pd.Series:
+    return _one(unknown_paired(), left=left, right=right, omission=omission, percentile=int(percentile), metric=metric)
+
+
+def matched_fit_count() -> int:
+    """Fitted models in the matched anchor/objective comparison: the 450-fit campaign
+    plus the follow-up closed-label SOLAR configurations (SCLSC variants excluded)."""
+    ledger = pd.read_csv(CAMPAIGN / "run_ledger.csv")
+    records = followup_records()
+    solar = records[(records.experiment == "closed_label") & ~records.arm.str.startswith("sclsc")]
+    return int(len(ledger) + len(solar))
+
+
+def followup_record_count() -> int:
+    return int(len(followup_records()))
+
+
+COUNTS = {"matched_fits": matched_fit_count, "followup_records": followup_record_count}

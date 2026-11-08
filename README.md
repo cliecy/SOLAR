@@ -29,6 +29,10 @@ immune rejection. The original450 runs remain preserved as paired comparators.
 all405 saved records, the original222 complete-panel intervals and420 contrasts
 with endpoint-specific coverage. [Full scientific results](docs/four405-results.md)
 retain native/common scores, false rejection, negative findings and all controls.
+The revised manuscript's printed numbers (Tables 4 and 5, Tables S10–S16 and the
+revised prose) are ledgered in `paper/claims_revision.csv` and checked by
+`scripts/verify_paper_numbers.py` together with the historical ledgers;
+`scripts/make_fig3_matched_tradeoffs.py` rebuilds the matched-tradeoffs figure.
 
 The original450-fit comparison includes eight matched30D arms plus Gaussian and
 learnable anchors at128D. Its historical results clarify the tradeoff:
@@ -63,7 +67,7 @@ python scripts/verify_release.py --output rebuilt
 ```
 
 The command checks file integrity, rebuilds and compares 16 numerical tables at
-absolute tolerance `1e-12`, verifies the historical number ledger, and writes
+absolute tolerance `1e-12`, verifies the manuscript number ledgers, and writes
 `rebuilt/verification.json` and `rebuilt/figures/`. Expected campaign counts are
 450 complete runs, 16,830 metric rows including the derived selected-arm rows,
 45 selection groups, 319 arm/endpoint summaries and 464 paired intervals.

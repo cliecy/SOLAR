@@ -20,6 +20,7 @@ import argparse
 import csv
 import json
 import math
+import re
 import sys
 from pathlib import Path
 
@@ -28,7 +29,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import paper_numbers as pn  # noqa: E402
 import paper_static_checks as static  # noqa: E402
 
-LEDGERS = ("claims_main.csv", "claims_si_text.csv", "claims_si_tables.csv", "claims_figures.csv")
+LEDGERS = ("claims_main.csv", "claims_si_text.csv", "claims_si_tables.csv", "claims_figures.csv",
+           "claims_revision.csv")
 
 
 def fmt(value: float, printed: str) -> str:
@@ -45,6 +47,23 @@ def fmt(value: float, printed: str) -> str:
     if "," in printed:
         out = f"{int(round(value)):,}"
     return out
+
+
+SCIENTIFIC = re.compile(r"^([+-]?)(\d+)\.(\d+)\\times10\^\{(-?\d+)\}$")
+
+
+def fmt_any(value: float, printed: str) -> str:
+    """`fmt`, plus the `m.mmm\\times10^{e}` form the generated tables use for tiny values.
+
+    A scientific-notation cell matches when the value rounds to the printed mantissa
+    at the printed number of mantissa decimals."""
+    match = SCIENTIFIC.match(printed.replace("$", "").replace(" ", ""))
+    if not match:
+        return fmt(value, printed)
+    sign, whole, frac, exponent = match.groups()
+    target = float(f"{sign}{whole}.{frac}e{exponent}")
+    tolerance = 0.5 * 10.0 ** (int(exponent) - len(frac))
+    return printed if abs(value - target) <= tolerance * (1 + 1e-9) else f"{value:.{len(frac)}e}"
 
 
 def expected_for(row: dict) -> str:
@@ -108,6 +127,49 @@ def expected_for(row: dict) -> str:
         return str(spec["dim"]) if len(rows) == len(pn.SEEDS) and dims == {spec["dim"]} else f"observed {len(rows)} runs, dims {dims}"
     if kind == "confusion":
         return fmt(float(pn.villani_confusion().loc[spec["true"], spec["pred"]]), printed)
+    if kind == "arm":
+        r = pn.arm_row(spec["source"], spec["arm"], spec["dim"], spec["metric"], spec["population"])
+        if stat == "mean":
+            return fmt_any(float(r.value), printed)
+        if stat == "datasets":
+            return str(int(r.datasets))
+        if stat == "batches":
+            return str(int(r.batches))
+    if kind == "interval":
+        r = pn.interval_row(spec["source"], spec["left"], spec.get("right", ""), spec.get("dim", 30),
+                            spec["metric"], spec["population"])
+        negate = bool(spec.get("negate", False))
+        if stat == "delta":
+            return fmt_any(-float(r.delta) if negate else float(r.delta), printed)
+        if stat in ("lower", "upper"):
+            if negate:  # SOLAR minus variant printed from a variant-minus-SOLAR record
+                value = -float(r.upper) if stat == "lower" else -float(r.lower)
+            else:
+                value = float(r[stat])
+            return fmt_any(value, printed)
+        if stat == "magnitude":
+            return fmt_any(abs(float(r.delta)), printed)
+        if stat == "batches":
+            return str(int(r.batches))
+        if stat == "positive":
+            return str(int(r.positive_batches))
+        if stat in ("lodo_min", "lodo_max"):
+            column = "leave_dataset_out_min" if stat == "lodo_min" else "leave_dataset_out_max"
+            return fmt_any(float(r[column]), printed)
+    if kind == "unknown":
+        if stat == "batches_pair":
+            a = pn.unknown_interval_row("solar", "scanvi", spec["omission"], spec["percentile"], "auroc")
+            k = pn.unknown_interval_row("solar", "scanvi", spec["omission"], spec["percentile"], "known_false_rejection")
+            return f"{int(a.batches)} / {int(k.batches)}"
+        r = pn.unknown_row(spec["arm"], spec["omission"], spec["confidence"], spec["percentile"])
+        return fmt_any(float(r[stat]), printed)
+    if kind == "unknown_interval":
+        r = pn.unknown_interval_row(spec["left"], spec["right"], spec["omission"], spec["percentile"], spec["metric"])
+        if stat == "batches":
+            return str(int(r.batches))
+        return fmt_any(float(r[stat]), printed)
+    if kind == "count":
+        return str(pn.COUNTS[spec["check"]]())
     if kind in ("static", "assertion", "derived"):
         return static.evaluate(kind, spec, printed)
     if kind == "non_result":
