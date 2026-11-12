@@ -26,6 +26,11 @@ encoder without updating model parameters.
 The held-out benchmark spans three datasets, nine batches and five model seeds.
 It supports a concrete representation tradeoff:
 
+- With common 30-dimensional outputs, SOLAR reaches query macro-F1 **0.811**,
+  compared with **0.774** for matched PCA and **0.838** for frozen-reference
+  scANVI (Table 2). After aligning SCLSC inputs and checkpoint selection, SOLAR
+  retains gains of **0.015** in query trustworthiness and **0.014** in joint
+  immune pseudotime smoothness (Table S16).
 - At 30 dimensions, local preservation raises joint trustworthiness from **0.9124
   to 0.9205** across six applicable batches and pseudotime smoothness from **0.8604
   to 0.8691** across three immune batches, relative to repeated orthogonal anchors.
@@ -42,9 +47,11 @@ comparisons, unknown-type rejection, endpoint coverage and descriptive uncertain
 
 ## Installation
 
-Use Python 3.12 on Linux. From this repository:
+Use Python 3.12 on Linux. Clone the repository, then install:
 
 ```bash
+git clone https://github.com/cliecy/SOLAR.git
+cd SOLAR
 python3.12 -m venv .venv
 . .venv/bin/activate
 python -m pip install -r requirements-model.txt
@@ -93,14 +100,15 @@ handles reference/query preprocessing and metadata.
 ## Reproducibility artifact
 
 The repository bundles saved score records and executable reconstruction for the
-450-fit benchmark and 405-record follow-up. With the replay environment installed:
+450-fit benchmark and 405-record follow-up. Install the replay environment and run:
 
 ```bash
+python -m pip install -r requirements-replay.txt
 python scripts/verify_release.py --output rebuilt
 ```
 
 This CPU command reconstructs the scientific tables, selection decisions, paired
-intervals, historical quantitative figures and revised matched-tradeoffs Figure 3.
+intervals, paper quantitative figures and an additional matched-tradeoffs overview.
 It checks all **8,582** ledger entries and writes `rebuilt/verification.json`,
 `rebuilt/four405/` and `rebuilt/figures/`. It needs no expression or checkpoint
 download. Allow several minutes and about 1 GB RAM, plus space for the environment.

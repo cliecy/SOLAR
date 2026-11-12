@@ -39,9 +39,34 @@ class LedgerRegressionTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'claim population changed'):
                 ledger.check_expected_counts([dict(doc='main', location='Table 4')], reference)
 
-    def test_math_delimited_dimensions(self):
+    def test_command_abstract_nested_braces(self):
+        text, _ = ledger.source_section(r'\abstract{\textbf{Results:} 0.811} \section{Other} 0.2', 'Abstract')
+        self.assertIn('0.811', text)
+        self.assertNotIn('0.2', text)
+
+    def test_percentage_and_sentence_final_short_decimal(self):
+        rows = [dict(doc='main', location='4.6 Unknown-type rejection', printed='0.909'),
+                dict(doc='main', location='4.6 Unknown-type rejection', printed='0.860')]
+        receipt = ledger.extract_prose(rows, {'main': r'\section{Unknown} Recall 90.9\%; smoothness 0.86.'})
+        self.assertEqual([r['printed'] for r in receipt], ['0.909', '0.86'])
+
+    def test_stable_label_disambiguates_repeated_titles(self):
+        tex = r'\section{Anchor geometry} 675 \label{sec:si-anchor-design} \section{Anchor geometry} 0.81 \label{sec:si-anchor-results}'
+        section, _ = ledger.source_section(tex, 'SI 2.3')
+        self.assertIn('675', section)
+        self.assertNotIn('0.81', section)
+
+    def test_integer_scientific_mantissa(self):
+        import sys
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
+        from verify_paper_numbers import fmt_any
+        self.assertEqual(fmt_any(0.00020001, r'+2\times10^{-4}'), r'+2\times10^{-4}')
+        self.assertNotEqual(fmt_any(0.0004, r'+2\times10^{-4}'), r'+2\times10^{-4}')
+
+    def test_current_table_dimensions_and_standard_errors(self):
         tex = r'''\label{tab:reviewer-main}
-Orthogonal repeated & $30$ & 0.811 \\
+\multicolumn{4}{l}{30-dimensional outputs} \\
+Orthogonal repeated & 0.811 \pm 0.034 & 0.912 & 0.86 \\
 \end{tabular*}'''
         normalized = '\n'.join(ledger.re.sub(r'\s*&\s*', ' & ', line.strip().replace('$', '')) for line in tex.splitlines())
         result = ledger.Ledger()

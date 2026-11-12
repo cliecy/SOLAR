@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rebuild the matched-tradeoffs dot plot (Figure 3 of the revised manuscript).
+"""Rebuild an additional matched-tradeoffs overview from Table 4 means.
 
     python scripts/make_fig3_matched_tradeoffs.py [--output-dir rebuilt/figures]
 
@@ -93,9 +93,9 @@ def main() -> int:
     axes[0].invert_yaxis()
     fig.tight_layout(w_pad=1.6)
     a.output_dir.mkdir(parents=True, exist_ok=True)
-    fig.savefig(a.output_dir / "Fig3_matched_tradeoffs.pdf", bbox_inches="tight")
-    fig.savefig(a.output_dir / "Fig3_matched_tradeoffs.png", dpi=200, bbox_inches="tight")
-    data.to_csv(a.output_dir / "Fig3_matched_tradeoffs.csv", index=False)
+    fig.savefig(a.output_dir / "matched_tradeoffs_overview.pdf", bbox_inches="tight")
+    fig.savefig(a.output_dir / "matched_tradeoffs_overview.png", dpi=200, bbox_inches="tight")
+    data.to_csv(a.output_dir / "matched_tradeoffs_overview.csv", index=False)
     print(data.pivot(index="configuration", columns="metric", values="value").loc[[r[0] for r in ROWS]].round(4).to_string())
     return 0
 
