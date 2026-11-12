@@ -79,8 +79,23 @@ def main():
         '--report', str(args.output / 'historical_claims.csv')], check=True)
     subprocess.run([sys.executable, str(ROOT / 'scripts/build_paper_figures.py'),
         '--output-dir', str(args.output / 'figures')], check=True)
-    report = dict(status='PASS', reproduction_level='frozen-score aggregation and historical quantitative figures',
-                  tolerance_absolute=TOLERANCE, campaign=scope, tables=checks)
+    followup = ROOT / 'experiments/four405'
+    subprocess.run([sys.executable, str(followup / 'replay.py'), '--root', str(followup),
+                    '--output', str(args.output / 'four405/replayed')], check=True)
+    subprocess.run([sys.executable, str(followup / 'scripts/replay_old450.py'),
+                    '--inputs', str(followup / 'evidence/old450'),
+                    '--output', str(args.output / 'four405/old450')], check=True)
+    subprocess.run([sys.executable, str(followup / 'scripts/verify_release.py'),
+                    '--replayed', str(args.output / 'four405/replayed'),
+                    '--old450', str(args.output / 'four405/old450'),
+                    '--report', str(args.output / 'four405/verification.json')], check=True)
+    subprocess.run([sys.executable, str(ROOT / 'scripts/make_fig3_matched_tradeoffs.py'),
+                    '--output-dir', str(args.output / 'figures')], check=True)
+    followup_report = json.loads((args.output / 'four405/replayed/verification.json').read_text())
+    followup_checks = json.loads((args.output / 'four405/verification.json').read_text())
+    report = dict(status='PASS', reproduction_level='saved-score reconstruction and quantitative figures',
+                  tolerance_absolute=TOLERANCE, campaign=scope, tables=checks,
+                  followup=followup_report, followup_tables=followup_checks['complete_table_comparisons'])
     (args.output / 'verification.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report, indent=2))
 

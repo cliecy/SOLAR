@@ -6,7 +6,8 @@ The controls separate label separation, annotation and local structure: matched1
 
 ## Quick start
 
-Python3.12 and a CPU are sufficient. From the extracted package directory:
+Python 3.12 and a CPU are sufficient. Use this directory inside the SOLAR
+repository so the preserved controls share the top-level campaign implementation:
 
 ```bash
 python3.12 -m venv .venv

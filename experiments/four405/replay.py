@@ -15,8 +15,8 @@ def interval(groups):
     draws=np.array([np.mean(t) for t in itertools.product(*distributions)])
     lo,hi=np.quantile(draws,[.025,.975],method='linear')
     return float(np.mean([np.mean(v) for v in groups.values()])),float(lo),float(hi),len(draws)
-def replay(root):
-    out=root/'replayed';out.mkdir(exist_ok=True)
+def replay(root, output=None):
+    out=output or root/'replayed';out.mkdir(parents=True, exist_ok=True)
     base=root/'evidence'/'new405'
     raw=pd.read_csv(base/'all_records.csv',keep_default_na=False)
     ledger=pd.read_csv(base/'records405.csv',keep_default_na=False)
@@ -106,4 +106,5 @@ def replay(root):
     (out/'verification.json').write_text(json.dumps(report,indent=2))
     print(json.dumps({k:v for k,v in report.items() if k!='sha256'},indent=2))
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('--root',type=Path,default=Path(__file__).resolve().parent);a=p.parse_args();replay(a.root)
+    p=argparse.ArgumentParser();p.add_argument('--root',type=Path,default=Path(__file__).resolve().parent)
+    p.add_argument('--output',type=Path);a=p.parse_args();replay(a.root,a.output)

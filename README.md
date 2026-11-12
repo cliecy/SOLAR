@@ -1,98 +1,130 @@
 # SOLAR: fixed orthogonal label anchors for single-cell reference mapping
 
-SOLAR learns a reusable expression encoder by assigning reference cell types fixed
-orthogonal directions in a supervised contrastive objective. A query is mapped
-with reference-fitted preprocessing and the frozen encoder. This gives an explicit
-way to study how label-anchor geometry and repetition shape cell-type separation,
-annotation and local biological structure.
+SOLAR learns an expression encoder that maps labeled reference cells and unseen
+query cells into a shared, normalized embedding. Fixed orthogonal cell-type anchors
+make label geometry explicit in a supervised contrastive objective. Use it to build
+reference mappings and study how annotation, cell-type separation and local
+biological structure respond to anchor geometry and repetition.
 
-The benchmark combines three single-cell datasets, nine held-out batches and five
-model seeds. The new **405-record follow-up** adds matched128 orthogonal controls,
-best-checkpoint SCLSC with gene/PCA40 inputs, unique+local controls and whole-type-out
-immune rejection. The original450 runs remain preserved as paired comparators.
+The Python API accepts reference and query `AnnData` objects and returns their
+embeddings, the reference-fitted PCA transform, a reusable encoder and run metadata.
+Query labels are excluded from the model-facing inputs. The benchmark implementation
+also provides matched anchor and objective controls.
 
-- At128 dimensions, repeated orthogonal query macro-F1 is **0.81240**, versus
-  **0.81127** for Gaussian and **0.80772** for learnable anchors. Both paired
-  annotation intervals include zero; orthogonality does not establish an annotation gain.
-- Best-checkpoint SCLSC gene/PCA40 has joint label ASW **0.94618/0.88990**, above
-  SOLAR30 **0.87341**; query F1 is **0.78627/0.78669** versus **0.81111**, with
-  paired differences crossing zero. Balanced-accuracy point estimates favor SCLSC.
-- Unique+local0.1 raises joint trustworthiness from **0.92691 to0.93172** versus
-  unique30, but query trustworthiness changes only **0.93954 to0.94019** across
-  six eligible batches. Query F1 changes **0.81131 to0.80999**, without an established gain.
-- In whole-type-out mapping, SOLAR common-distance AUROC is **0.95507** for
-  omitted B cells and **0.45535** for CD16 monocytes. Native cosine AUROC is
-  **0.86706/0.45186**. B-cell unknown endpoints cover two batches, known endpoints
-  three; reference5% calibration does not guarantee query5% false rejection.
+[Python usage](#use-the-encoder) · [Scientific results](docs/four405-results.md) ·
+[Reproducibility artifact](#reproducibility-artifact) · [Technical guide](docs/reproduction.md)
 
-[Follow-up quick start and complete evidence](experiments/four405/README.md) reproduce
-all405 saved records, the original222 complete-panel intervals and420 contrasts
-with endpoint-specific coverage. [Full scientific results](docs/four405-results.md)
-retain native/common scores, false rejection, negative findings and all controls.
-The revised manuscript's printed numbers (Tables 4 and 5, Tables S10–S16 and the
-revised prose) are ledgered in `paper/claims_revision.csv` and checked by
-`scripts/verify_paper_numbers.py` together with the historical ledgers;
-`scripts/make_fig3_matched_tradeoffs.py` rebuilds the matched-tradeoffs figure.
+## Method and findings
 
-The original450-fit comparison includes eight matched30D arms plus Gaussian and
-learnable anchors at128D. Its historical results clarify the tradeoff:
+The encoder applies two hidden layers to reference-fitted PCA features and learns
+unit-normalized cell representations with label-aware contrastive learning. Each
+reference class has a fixed orthogonal direction; repeated anchors enter the
+contrastive pool once per labeled cell. The embedding width must be at least the
+number of reference classes. Query mapping uses the frozen preprocessing and
+encoder without updating model parameters.
 
-- Fixed Gaussian anchors reach query macro-F1 **0.8184**, versus **0.8111** for
-  repeated orthogonal anchors at 30D. The paired difference is **+0.0072**
-  (descriptive 95% batch-bootstrap interval **[+0.0023, +0.0122]**).
-- Adding local preservation to repeated orthogonal anchors raises joint
-  trustworthiness from **0.9124 to 0.9205** across six applicable batches, and
-  pseudotime smoothness from **0.8604 to 0.8691** across three immune batches.
-  Its macro-F1 is **0.8099**: local preservation and annotation are distinct goals.
-- Historical comparisons retain PCA, scVI, scANVI and SCLSC. scANVI has higher
-  annotation scores than SOLAR; fixed anchors provide a controlled representation
-  mechanism rather than a universal annotation advantage.
+The held-out benchmark spans three datasets, nine batches and five model seeds.
+It supports a concrete representation tradeoff:
 
-All means average seeds first, batches within each dataset second, and datasets
-with equal weight. [Explore the full arm results](data/campaign450/arm_summary.csv),
-[paired intervals](data/campaign450/paired_batch_uncertainty.csv) and
-[historical comparisons](data/heldout/tables/overall_summary.csv).
+- With common 30-dimensional outputs, SOLAR reaches query macro-F1 **0.811**,
+  compared with **0.774** for matched PCA and **0.838** for frozen-reference
+  scANVI (Table 2). After aligning SCLSC inputs and checkpoint selection, SOLAR
+  retains gains of **0.015** in query trustworthiness and **0.014** in joint
+  immune pseudotime smoothness (Table S16).
+- At 30 dimensions, local preservation raises joint trustworthiness from **0.9124
+  to 0.9205** across six applicable batches and pseudotime smoothness from **0.8604
+  to 0.8691** across three immune batches, relative to repeated orthogonal anchors.
+- With unique anchors, local preservation raises joint trustworthiness from
+  **0.92691 to 0.93172**; query macro-F1 changes from **0.81131 to 0.80999**.
+  Structure preservation and annotation are separate objectives.
+- At 128 dimensions, repeated orthogonal anchors reach query macro-F1 **0.81240**,
+  compared with Gaussian **0.81127** and learnable anchors **0.80772**. Both paired
+  annotation intervals include zero.
 
-## Quick start
+Means average seeds, batches within each dataset, then datasets equally. The
+[scientific results guide](docs/four405-results.md) includes all controls, SCLSC
+comparisons, unknown-type rejection, endpoint coverage and descriptive uncertainty.
 
-Reconstruct the result tables, all 450-fit summaries and selection decisions,
-paired uncertainty, and historical quantitative figures from bundled score records.
-Use Python **3.12** on Linux:
+## Installation
+
+Use Python 3.12 on Linux. Clone the repository, then install:
 
 ```bash
+git clone https://github.com/cliecy/SOLAR.git
+cd SOLAR
 python3.12 -m venv .venv
 . .venv/bin/activate
+python -m pip install -r requirements-model.txt
+python -m pip install --no-deps .
+python examples/smoke_test.py
+```
+
+The last command runs a small synthetic CPU demonstration with three training epochs.
+It prints reference and query embedding shapes `(240, 8)` and `(80, 8)` and
+`SMOKE TEST PASSED`. It checks installation and mapping; the reported scientific
+results are reconstructed separately below. PyTorch and AnnData are needed for the
+encoder; saved-score reconstruction uses only `requirements-replay.txt`.
+
+## Use the encoder
+
+Provide processed expression matrices with identical genes in the same order,
+unique cell identifiers and reference cell types in `reference.obs['cell_type']`.
+Choose normalization and features on the reference and apply the same transformation
+to the query; `run_inductive` fits PCA on the reference only.
+
+```python
+import anndata as ad
+from SOLAR.benchmark import PreprocessConfig, TrainConfig, run_inductive
+
+reference = ad.read_h5ad('reference.h5ad')
+query = ad.read_h5ad('query.h5ad')
+result = run_inductive(
+    reference=reference,
+    query=query,
+    variant='solar_orthogonal',
+    labels_key='cell_type',
+    preprocess=PreprocessConfig(n_components=40, source='X'),
+    train=TrainConfig(embedding_dim=128),
+    device='cpu',
+)
+query.obsm['X_solar'] = result.query_embedding
+result.save('mapping', save_model=True)
+```
+
+The output contains `embedding.npz`, `pca_preprocessor.npz`, `anchors.npy`,
+`run_info.json` and the model checkpoint. The [runnable synthetic example](examples/smoke_test.py)
+requires no external data. [SOLARModel](src/SOLAR/api.py) exposes lower-level setup,
+fit, transform, save and load methods; the [mapping adapter](src/SOLAR/benchmark/adapter.py)
+handles reference/query preprocessing and metadata.
+
+## Reproducibility artifact
+
+The repository bundles saved score records and executable reconstruction for the
+450-fit benchmark and 405-record follow-up. Install the replay environment and run:
+
+```bash
 python -m pip install -r requirements-replay.txt
 python scripts/verify_release.py --output rebuilt
 ```
 
-The command checks file integrity, rebuilds and compares 16 numerical tables at
-absolute tolerance `1e-12`, verifies the manuscript number ledgers, and writes
-`rebuilt/verification.json` and `rebuilt/figures/`. Expected campaign counts are
-450 complete runs, 16,830 metric rows including the derived selected-arm rows,
-45 selection groups, 319 arm/endpoint summaries and 464 paired intervals.
-It needs a CPU and no expression-data or model download. Allow a few minutes,
-about 1 GB of memory and 100 MB for generated outputs and figures; environment
-installation requires additional space.
+This CPU command reconstructs the scientific tables, selection decisions, paired
+intervals, paper quantitative figures and an additional matched-tradeoffs overview.
+It checks all **8,582** ledger entries and writes `rebuilt/verification.json`,
+`rebuilt/four405/` and `rebuilt/figures/`. It needs no expression or checkpoint
+download. Allow several minutes and about 1 GB RAM, plus space for the environment.
 
-## Method and exploration
-
-The encoder uses reference-selected features and PCA, two hidden layers, a normalized
-output and label-aware contrastive learning. Orthogonal anchors require at least
-as many output dimensions as reference classes. Repeated, unique, absent, Gaussian,
-learnable, reference-derived hierarchy and local-preservation controls are retained.
-
-- [Reproduction guide](docs/reproduction.md): commands, input identities, numerical
-  contracts, selection timing, dependencies and reconstruction scope.
-- [Model source](src/SOLAR/api.py), [benchmark adapter](src/SOLAR/benchmark/adapter.py)
-  and [campaign extensions](src/SOLAR/benchmark/reviewer_extensions.py).
-- [Scientific provenance](PROVENANCE.md) and [dataset acquisition](configs/scib_datasets.yaml).
+The [technical guide](docs/reproduction.md) specifies exact populations, input
+identities, tolerances, figure mappings, reference-selection timing and dependencies
+for model fitting and scoring. [Historical v1.0 assets](https://github.com/cliecy/SOLAR/releases/tag/v1.0)
+are a frozen earlier release; this branch contains the current reconstruction source.
 
 ## Citation and license
 
 Please cite *SOLAR: Fixed orthogonal label anchors for single-cell reference
-mapping* using the author metadata in [CITATION.cff](CITATION.cff).
-Code is under the [MIT License](LICENSE). Processed expression datasets originate
-from the scIB Figshare collection, DOI `10.6084/m9.figshare.12420968.v8`, under
-CC BY 4.0. The package includes score records and the historical figure inputs;
-expression matrices and upstream SCLSC source are obtained separately.
+mapping* using [CITATION.cff](CITATION.cff). Code is under the [MIT License](LICENSE).
+Processed expression datasets originate from the scIB Figshare collection,
+DOI [10.6084/m9.figshare.12420968.v8](https://doi.org/10.6084/m9.figshare.12420968.v8),
+under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Score records and
+historical figure inputs are bundled; expression matrices and upstream SCLSC
+source are acquired separately. See [provenance](PROVENANCE.md) and
+[dataset identities](configs/scib_datasets.yaml).

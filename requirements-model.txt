@@ -1,0 +1,22 @@
+# CPU model installation, sharing the saved-score environment pins.
+--extra-index-url https://download.pytorch.org/whl/cpu
+-r requirements-replay.txt
+anndata==0.11.4
+array-api-compat==1.16.0
+asciitree==1.0.0
+deprecated==3.0.1
+fasteners==0.20
+filelock==4.2.10
+fsspec==2026.9.0
+h5py==3.16.0
+jinja2==3.1.6
+markupsafe==3.0.4
+mpmath==1.3.0
+natsort==8.4.0
+networkx==3.7
+numcodecs==0.15.2
+sympy==1.14.0
+torch==2.15.0+cpu
+typing-extensions==4.16.0
+wrapt==2.5.2
+zarr==2.18.7

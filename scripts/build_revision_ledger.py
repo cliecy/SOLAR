@@ -8,8 +8,9 @@ The LaTeX sources are not distributed with this repository; this script records
 how the revision ledger was derived from them. Every row pairs a printed string,
 copied from the LaTeX source, with the frozen record that must reproduce it
 (``kind``/``spec`` are evaluated by ``verify_paper_numbers.py``). Table rows are
-parsed from the table bodies; prose numbers are listed explicitly below and the
-script checks that each printed string occurs in the named source file.
+parsed from the table bodies; prose templates are bound to complete numeric tokens
+within their declared section; explicitly relocated claims use their table identity. Missing tokens, ambiguous sections and changed claim
+populations fail before writing. Full manuscript files are external optional inputs.
 """
 from __future__ import annotations
 
@@ -27,6 +28,8 @@ ARMS = {
     "Gaussian": "gaussian", "Learnable": "learnable", "Reference geometry": "hierarchy",
     "Local preservation": "local", "Combined": "hierarchy_local", "Validation-selected": "validation_selected",
     "Orthogonal unique + local preservation": "unique_local",
+    "Local preservation, 0.1": "local", "Unique + local, 0.1": "unique_local",
+    "Local preservation, 0.03": "local003", "Local preservation, 0.3": "local03",
     "Local preservation, weight 0.03": "local003", "Local preservation, weight 0.3": "local03",
     "Orthogonal unique + Local preservation (0.1)": "unique_local",
     "Orthogonal repeated + Local preservation (0.03)": "local003",
@@ -73,7 +76,7 @@ SCLSC_ROWS = {
 def clean(cell: str) -> str:
     cell = cell.strip().replace("$", "")
     cell = re.sub(r"\\textbf\{([^}]*)\}", r"\1", cell)
-    return cell.strip()
+    return cell.split(r"\pm", 1)[0].strip()
 
 
 def endpoint(text: str) -> tuple[str, str]:
@@ -83,10 +86,10 @@ def endpoint(text: str) -> tuple[str, str]:
 
 
 def interval_cell(text: str) -> tuple[str, str, str]:
-    match = re.match(r"^(.+?) \[(.+?), (.+?)\]$", clean(text))
+    match = re.match(r"^(.+?) \[(.+?), (.+?)\]$", text.strip().replace("$", ""))
     if not match:
         raise ValueError(f"not an interval cell: {text!r}")
-    return tuple(part.strip() for part in match.groups())
+    return tuple(clean(part) for part in match.groups())
 
 
 def body(tex: str, label: str) -> list[str]:
@@ -136,21 +139,27 @@ class Ledger:
 
 
 def table4(ledger: Ledger, main: str) -> None:
+    dim = None
     for line in body(main, "tab:reviewer-main"):
-        match = re.match(r"^(?P<name>[^&\\]+?) & (?P<dim>30|128) & (?P<value>[^&]+?) \\\\", line)
-        if match:
-            dim = int(match["dim"])
-            ledger.arm("main", "Table 4", match["value"], ARMS[match["name"].strip()], dim, "macro_f1", "query")
+        header = re.search(r"(30|128)-dimensional outputs", line)
+        if header:
+            dim = int(header.group(1))
+        cells = line.removesuffix(r"\\").strip().split(" & ")
+        if dim and len(cells) == 4 and cells[0] in ARMS:
+            ledger.arm("main", "Table 4", cells[1], ARMS[cells[0]], dim, "macro_f1", "query")
+
 
 
 def table5(ledger: Ledger, main: str) -> None:
     current = None
     for line in body(main, "tab:ood"):
-        match = re.match(r"^(?P<type>[^&]*?) ?& (?P<method>SOLAR|scANVI|Matched PCA), (?P<score>[a-z ]+?) & "
+        for title, key in UNKNOWN_TYPES.items():
+            if r"\textbf{" + title + "}" in line:
+                current = key
+        match = re.match(r"^(?P<method>SOLAR|scANVI|Matched PCA), (?P<score>[a-z ]+?) & "
                          r"(?P<a>[^&]+?) & (?P<r>[^&]+?) & (?P<f>[^&]+?) & (?P<frr>[^&]+?) \\\\", line)
         if not match:
             continue
-        current = UNKNOWN_TYPES.get(match["type"].strip(), current)
         arm, score = UNKNOWN_METHODS[match["method"]], UNKNOWN_SCORES[match["score"].strip()]
         for stat, printed in zip(UNKNOWN_FIELDS, (match["a"], match["r"], match["f"], match["frr"])):
             ledger.unknown("main", "Table 5", printed, arm, current, score, stat)
@@ -169,7 +178,7 @@ def table_s11(ledger: Ledger, si: str) -> None:
 
 def tables_s12_s13(ledger: Ledger, tables: str) -> None:
     arms_part = tables[tables.index("\\label{tab:reviewer-arms}"):tables.index("\\label{tab:reviewer-pairs}")]
-    pairs_part = tables[tables.index("\\label{tab:reviewer-pairs}"):]
+    pairs_part = "\n".join(body(tables, "tab:reviewer-pairs"))
     block = None
     for line in arms_part.splitlines():
         header = re.search(r"\\textbf\{(.+?); (30|128) dimensions\}", line)
@@ -217,12 +226,16 @@ def table_s14(ledger: Ledger, si: str) -> None:
 
 
 def table_s15(ledger: Ledger, si: str) -> None:
+    current = None
     for line in body(si, "tab:s15"):
-        match = re.match(r"^(?P<type>B-cell family|CD16\+ monocytes) & (?P<method>SOLAR|scANVI|Matched PCA), (?P<score>[a-z ]+?) & "
+        for title, key in UNKNOWN_TYPES.items():
+            if r"\textbf{" + title + "}" in line:
+                current = key
+        match = re.match(r"^(?P<method>SOLAR|scANVI|Matched PCA), (?P<score>[a-z ]+?) & "
                          r"(?P<a>[^&]+?) & (?P<r>[^&]+?) & (?P<f>[^&]+?) & (?P<frr>[^&]+?) & (?P<batches>[^&]+?) \\\\", line)
         if not match:
             continue
-        omission, arm, score = UNKNOWN_TYPES[match["type"]], UNKNOWN_METHODS[match["method"]], UNKNOWN_SCORES[match["score"].strip()]
+        omission, arm, score = current, UNKNOWN_METHODS[match["method"]], UNKNOWN_SCORES[match["score"].strip()]
         for stat, printed in zip(UNKNOWN_FIELDS, (match["a"], match["r"], match["f"], match["frr"])):
             ledger.unknown("si", "Table S15", printed, arm, omission, score, stat)
         ledger.add("si", "Table S15", match["batches"], "unknown", {"omission": omission, "percentile": 5, "stat": "batches_pair"})
@@ -250,7 +263,7 @@ def table_s16(ledger: Ledger, si: str) -> None:
 
 
 def table_s10(ledger: Ledger, paired: str) -> None:
-    for line in paired.splitlines():
+    for line in body(paired, "tab:s10"):
         match = re.match(r"^(?P<contrast>[^&\\]+?) & (?P<ep>[^&]+?) & (?P<cell>[^&]+?) & (?P<b>\d+) & (?P<pos>\d+) \\\\", line)
         if not match:
             continue
@@ -359,14 +372,98 @@ def prose(ledger: Ledger) -> None:
     u("si", L, "0.31", "solar", "CD16", D, "known_false_rejection"); u("si", L, "0.43", "pca", "CD16", D, "known_false_rejection")
 
 
-def check_presence(rows: list[dict], sources: dict[str, str]) -> None:
-    """Every printed string must occur in the named source (after dropping math delimiters)."""
-    normalized = {doc: text.replace("$", "") for doc, text in sources.items()}
-    missing = [r for r in rows if r["printed"] not in normalized[r["doc"]]]
-    if missing:
-        for r in missing[:20]:
-            print("  not found in", r["doc"], ":", r["location"], r["printed"])
-        raise SystemExit(f"{len(missing)} printed strings were not found in the LaTeX sources")
+def source_section(text: str, location: str) -> tuple[str, int]:
+    """Return one named prose section, excluding subsequent headings and tables."""
+    if location == 'Abstract':
+        match = re.search(r'\\begin\{abstract\}(.*?)\\end\{abstract\}', text, re.S)
+        if not match:
+            start = text.find(r'\abstract{')
+            if start >= 0:
+                pos, depth = start + len(r'\abstract{'), 1
+                end = pos
+                while depth and end < len(text):
+                    depth += (text[end] == '{') - (text[end] == '}')
+                    end += 1
+                if depth == 0:
+                    return text[pos:end-1], text.count('\n', 0, pos) + 1
+            raise ValueError('missing abstract environment')
+        return match.group(1), text.count('\n', 0, match.start(1)) + 1
+    titles = {
+        '3.6 Anchor geometry and local preservation': 'anchor geometry',
+        '4.3 Matched controls': 'matched control',
+        '4.5 SCLSC comparison': 'sclsc',
+        '4.6 Unknown-type rejection': 'unknown',
+        'SI 2.3': 'anchor geometry',
+        'SI 2.8': 'uncertainty',
+        'SI 4 Anchor geometry': 'anchor geometry',
+        'SI 5 Unknown-type rejection': 'unknown',
+    }
+    labels = {
+        '3.6 Anchor geometry and local preservation': 'subsec:anchor-controls',
+        '4.3 Matched controls': 'subsec:results-controls',
+        '4.5 SCLSC comparison': 'subsec:results-preservation',
+        '4.6 Unknown-type rejection': 'subsec:results-ood',
+        'SI 2.3': 'sec:si-anchor-design', 'SI 2.8': 'sec:si-uncertainty',
+        'SI 4 Anchor geometry': 'sec:si-anchor-results',
+        'SI 5 Unknown-type rejection': 'sec:si-ood-results',
+    }
+    needle = titles[location]
+    headings = list(re.finditer(r'\\(?:sub)*section\*?\{([^{}]*)\}', text))
+    candidates = [n for n, m in enumerate(headings) if needle in clean(m.group(1)).lower()]
+    label_pos = text.find(r'\label{' + labels[location] + '}')
+    if label_pos >= 0:
+        candidates = [n for n, m in enumerate(headings) if m.start() < label_pos and (n+1 == len(headings) or headings[n+1].start() > label_pos)]
+    # Number prefixes refer to the declared section; duplicate titles are ambiguous.
+    prefix = location.removeprefix('SI ').split()[0]
+    numbered = [n for n in candidates if clean(headings[n].group(1)).startswith(prefix)]
+    candidates = numbered or candidates
+    if len(candidates) != 1:
+        raise ValueError(f'{location}: expected one section, found {len(candidates)}')
+    n = candidates[0]
+    start = headings[n].end()
+    end = headings[n + 1].start() if n + 1 < len(headings) else len(text)
+    section = text[start:end]
+    section = re.sub(r'\\begin\{(?:table\*?|longtable)\}.*?\\end\{(?:table\*?|longtable)\}', '', section, flags=re.S)
+    return section, text.count('\n', 0, start) + 1
+
+
+def extract_prose(rows: list[dict], sources: dict[str, str]) -> list[dict]:
+    """Bind semantic templates to numeric tokens within their declared sections.
+
+    Templates specify expected printed precision, not recalculated experimental values.
+    A changed or missing token fails closed instead of borrowing a value elsewhere.
+    """
+    locations = []
+    for row in rows:
+        section, first_line = source_section(sources[row['doc']], row['location'])
+        normalized = section.replace('$', '')
+        from decimal import Decimal
+        normalized = re.sub(r'(?<![\d.])([+-]?\d+(?:\.\d+)?)\\%', lambda m: str(Decimal(m.group(1)) / 100), normalized)
+        match = re.search(r'(?<![\d.])' + re.escape(row['printed']) + r'(?!\d|\.\d)', normalized)
+        if not match:
+            match = next((m for m in re.finditer(r'(?<![\d.])[+-]?\d+(?:\.\d+)?(?!\d|\.\d)', normalized) if Decimal(m.group()) == Decimal(row['printed'])), None)
+        if not match:
+            raise ValueError(f"{row['doc']} {row['location']}: missing numeric token {row['printed']}")
+        row['printed'] = match.group(0)
+        locations.append(dict(doc=row['doc'], location=row['location'], printed=row['printed'],
+                              section_first_line=first_line,
+                              section_line_offset=normalized.count('\n', 0, match.start()),
+                              context=normalized[max(0, match.start()-100):match.end()+100]))
+    return locations
+
+
+def check_expected_counts(rows: list[dict], reference: Path) -> None:
+    from collections import Counter
+    with reference.open(newline='') as handle:
+        frozen = list(csv.DictReader(handle))
+    expected = Counter((r['doc'], r['location']) for r in frozen)
+    actual = Counter((r['doc'], r['location']) for r in rows)
+    if actual != expected:
+        raise ValueError(f'claim population changed: expected {dict(expected)}, got {dict(actual)}')
+    if frozen and 'spec' in frozen[0]:
+        identity = lambda r: (r['doc'], r['location'], r['kind'], json.dumps(json.loads(r['spec']), sort_keys=True))
+        if Counter(map(identity, rows)) != Counter(map(identity, frozen)):
+            raise ValueError('claim identities changed despite matching counts')
 
 
 def main() -> int:
@@ -375,6 +472,7 @@ def main() -> int:
     parser.add_argument("--si-tex", type=Path, required=True)
     parser.add_argument("--si-tables-tex", type=Path, required=True)
     parser.add_argument("--si-paired-tex", type=Path, required=True)
+    parser.add_argument('--locations', type=Path, help='Optional private JSON receipt with prose source contexts')
     parser.add_argument("--output", type=Path, default=ROOT / "paper" / "claims_revision.csv")
     args = parser.parse_args()
     main_tex, si_tex = args.main_tex.read_text(), args.si_tex.read_text()
@@ -382,6 +480,12 @@ def main() -> int:
 
     ledger = Ledger()
     prose(ledger)
+    prose_rows = ledger.rows
+    ledger = Ledger()
+    # Normalize harmless math delimiters and spacing before table parsing.
+    main_tex, si_tex, tables_tex, paired_tex = [
+        '\n'.join(re.sub(r'\s*&\s*', ' & ', re.sub(r'~?\\cite\{[^}]*\}', '', line.strip().replace('$', ''))) for line in text.splitlines())
+        for text in (main_tex, si_tex, tables_tex, paired_tex)]
     table4(ledger, main_tex)
     table5(ledger, main_tex)
     table_s10(ledger, paired_tex)
@@ -390,13 +494,39 @@ def main() -> int:
     table_s14(ledger, si_tex)
     table_s15(ledger, si_tex)
     table_s16(ledger, si_tex)
-    check_presence(ledger.rows, {"main": main_tex, "si": si_tex + tables_tex + paired_tex})
+    # Retain stable ledger IDs while tracing claims removed from prose to their
+    # explicit table cells in this revision. Never search unrelated prose sections.
+    locations = []
+    for index, row in enumerate(prose_rows):
+        try:
+            locations.extend(extract_prose([row], {'main': main_tex, 'si': si_tex}))
+        except ValueError as error:
+            if 'missing numeric token' not in str(error):
+                raise
+            relocated = {0, 2, 16, 20, 53, 54, 55, 103, 104, 121, 122}
+            if index not in relocated:
+                raise
+            candidates = [r for r in ledger.rows if r['kind'] == row['kind'] and r['spec'] == row['spec']]
+            if row['kind'] == 'count':
+                locations.extend(extract_prose([dict(row, location='3.6 Anchor geometry and local preservation')], {'main': main_tex}))
+                continue
+            if not candidates:
+                raise ValueError(f"removed prose claim has no matching table identity: {row}")
+            source = candidates[0]
+            row['printed'] = source['printed']
+            locations.append(dict(doc=row['doc'], location=row['location'],
+                                  source_doc=source['doc'], source_table=source['location'],
+                                  printed=source['printed']))
+    ledger.rows = prose_rows + ledger.rows
+    check_expected_counts(ledger.rows, ROOT / 'paper/claims_revision.csv')
 
     with args.output.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=["claim_id", "doc", "location", "printed", "kind", "spec"])
         writer.writeheader()
         for n, row in enumerate(ledger.rows, 1):
             writer.writerow({"claim_id": f"rev-{n:04d}", **row})
+    if args.locations:
+        args.locations.write_text(json.dumps(locations, indent=2) + '\n')
     by_location = {}
     for row in ledger.rows:
         by_location[row["location"]] = by_location.get(row["location"], 0) + 1

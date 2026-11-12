@@ -3,14 +3,17 @@
 The release reconstructs numerical analyses from frozen per-run scores. It covers
 the final 450-fit campaign tables (the manuscript's added matched-control analyses),
 the historical baseline/dimension/anchor comparisons, historical paired uncertainty
-and historical quantitative Figures 2–4 and S2–S5. The matched-tradeoffs figure (Figure 3 of the revised manuscript) is rebuilt by
+and historical quantitative Figures 2–4 and S2–S5. An additional matched-tradeoffs overview is rebuilt by
 `scripts/make_fig3_matched_tradeoffs.py` from the campaign and follow-up summaries.
 The original manuscript and supplement are separately distributed documents.
 
 ## One environment and verification command
 
 Use the README commands with CPython 3.12. `requirements-replay.txt` pins the complete
-installed replay environment. `python scripts/verify_release.py --output rebuilt`
+installed replay environment. For the encoder, `requirements-model.txt` extends the
+same pins with the tested CPU model dependencies, including compatible AnnData/Zarr
+versions. Install it with pip, then install the package with `--no-deps` as shown in
+the README. `python scripts/verify_release.py --output rebuilt`
 runs every release reconstruction below and compares every CSV row, identity,
 missing value and numeric field with its frozen reference, at absolute tolerance
 `1e-12`, zero relative tolerance. A changed row population fails verification.
@@ -22,7 +25,8 @@ missing value and numeric field with its frozen reference, at absolute tolerance
 | Historical method, dimension and anchor comparisons, dataset and overall summaries, leave-one-dataset-out results | `scripts/build_experiment_v1_2_tables.py --input-dir data/heldout --output-dir rebuilt/historical` | `data/heldout/{runs,metrics}.csv` | All seven `data/heldout/tables/*.csv` |
 | Historical paired batch uncertainty | `scripts/replay_historical_uncertainty.py --output rebuilt/historical_uncertainty` | `data/heldout/{runs,metrics}.csv` | Both `data/historical_uncertainty/*.csv` |
 | Manuscript number ledgers, historical and revision | `scripts/verify_paper_numbers.py --report rebuilt/historical_claims.csv` | `paper/`, historical score records, `data/campaign450`, `data/historical_uncertainty`, `experiments/four405`, configs and source contracts | Printed precision and explicit discrepancy ledger |
-| Matched-tradeoffs figure (revised manuscript Figure 3) | `scripts/make_fig3_matched_tradeoffs.py --output-dir rebuilt/figures` | `experiments/four405/evidence/new405/arm_summary.csv`, `data/campaign450/arm_summary.csv` | Plotted values are the ledger-checked Table 4, S11 and S14 means |
+| Additional matched-tradeoffs overview (Table 4) | `scripts/make_fig3_matched_tradeoffs.py --output-dir rebuilt/figures` | `experiments/four405/evidence/new405/arm_summary.csv`, `data/campaign450/arm_summary.csv` | Plotted values are the ledger-checked Table 4, S11 and S14 means |
+| 405-record follow-up and preserved controls | `experiments/four405/replay.py` and its `scripts/replay_old450.py` and `scripts/verify_release.py`, invoked by the top-level verifier | `experiments/four405/evidence/` | Batch means, summaries, 222 complete-panel intervals, 420 endpoint-specific intervals and seven full-table comparisons |
 | Historical quantitative figures | `scripts/build_paper_figures.py --output-dir rebuilt/figures` | Historical score records and Villani predictions | Numerical values checked by the historical ledger; PDF/PNG rendering is exercised, not compared pixelwise |
 
 The four historical ledgers contain 5,207 entries whose locations follow the
@@ -31,10 +35,55 @@ the revised manuscript: Tables 4 and 5, Tables S10–S16 and the revised prose,
 evaluated against `data/campaign450`, `data/historical_uncertainty` and
 `experiments/four405`. All 8,582 entries match and `paper/known_discrepancies.csv`
 is empty. `scripts/build_revision_ledger.py` records how the revision ledger was
-derived from the LaTeX sources, which are not distributed; it copies each printed
-string from the source and never recomputes it. Counting entries is not a
-token-coverage assertion for the manuscript. No test here establishes independent
-scientific validation.
+derived from external LaTeX sources. Table rows are parsed from their labeled
+bodies; prose templates are bound to numeric tokens within the named section,
+with token boundaries checked. The parser supports the supplied Springer abstract
+command, stable section labels, percentage notation, and tables with standard errors.
+The ledger retains historical claim IDs and location names: 11 explicitly enumerated
+claims removed from prose are traced to their matching table identity or the methods
+fit count. A changed claim count or scientific identity fails before writing the ledger. Source comparison is optional and requires the author's
+external manuscript files; no manuscript is distributed with the code.
+
+The authoritative source layout is `SOLAR_LaTeX/main.tex` and
+`SOLAR_LaTeX/si/main.tex`. To compare an external copy without bundling it:
+
+```bash
+python scripts/build_revision_ledger.py \
+  --main-tex /path/to/SOLAR_LaTeX/main.tex \
+  --si-tex /path/to/SOLAR_LaTeX/si/main.tex \
+  --si-tables-tex /path/to/SOLAR_LaTeX/si/main.tex \
+  --si-paired-tex /path/to/SOLAR_LaTeX/si/main.tex \
+  --output /path/to/private/claims_revision.csv \
+  --locations /path/to/private/source_locations.json
+```
+
+The rebuilt ledger contains the same 3,375 scientific claim identities. Printed
+formatting follows the external source (including shortened decimals); numerical
+verification uses that printed precision. Source contexts remain in the optional
+external receipt. The bundled historical ledger preserves its original formatting.
+
+## Paper display mapping
+
+| Paper display | Saved input / generator |
+|---|---|
+| Table 1; Table S1 | `data/splits/heldout_batch_composition.csv` and dataset configuration |
+| Tables 2–3; Tables S3, S5–S9 | `data/heldout` / `build_experiment_v1_2_tables.py` |
+| Table S2 | Comparator configuration and static implementation contracts |
+| Table S4 | `data/within_batch/solar_width_runs.csv` / historical number verifier |
+| Table 4; Tables S11–S13 | Campaign and follow-up arm summaries / campaign and follow-up replay |
+| Table 5; Table S15 | `experiments/four405/evidence/unknown90` / follow-up replay |
+| Table S10 | `data/historical_uncertainty` / `replay_historical_uncertainty.py` |
+| Tables S14, S16 | `experiments/four405/evidence/new405` / follow-up replay |
+| Figures 2, 3, 4; Figures S1–S5 | `build_paper_figures.py`, historical scores, predictions and saved UMAP coordinates |
+| Figure 1 | Conceptual workflow illustration; no numerical reconstruction |
+
+In the supplied manuscript, Figure 3 is the separate 128D anchor-ablation
+comparison. `make_fig3_matched_tradeoffs.py` is retained as a historical script
+name for an additional Table 4 overview; its output is named
+`matched_tradeoffs_overview.*` and is not a paper figure replacement. All performance
+means use seeds, batches within dataset, then datasets equally. Endpoints retain
+their actual populations and coverage; per-cell F1 and confusion displays retain
+their documented class and seed aggregation.
 
 ## Populations, controls and uncertainty
 

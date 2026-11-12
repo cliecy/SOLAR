@@ -49,7 +49,7 @@ def fmt(value: float, printed: str) -> str:
     return out
 
 
-SCIENTIFIC = re.compile(r"^([+-]?)(\d+)\.(\d+)\\times10\^\{(-?\d+)\}$")
+SCIENTIFIC = re.compile(r"^([+-]?)(\d+)(?:\.(\d+))?\\times10\^\{(-?\d+)\}$")
 
 
 def fmt_any(value: float, printed: str) -> str:
@@ -61,6 +61,7 @@ def fmt_any(value: float, printed: str) -> str:
     if not match:
         return fmt(value, printed)
     sign, whole, frac, exponent = match.groups()
+    frac = frac or ''
     target = float(f"{sign}{whole}.{frac}e{exponent}")
     tolerance = 0.5 * 10.0 ** (int(exponent) - len(frac))
     return printed if abs(value - target) <= tolerance * (1 + 1e-9) else f"{value:.{len(frac)}e}"
