@@ -10,7 +10,10 @@ The original manuscript and supplement are separately distributed documents.
 ## One environment and verification command
 
 Use the README commands with CPython 3.12. `requirements-replay.txt` pins the complete
-installed replay environment. `python scripts/verify_release.py --output rebuilt`
+installed replay environment. For the encoder, `requirements-model.txt` extends the
+same pins with the tested CPU model dependencies, including compatible AnnData/Zarr
+versions. Install it with pip, then install the package with `--no-deps` as shown in
+the README. `python scripts/verify_release.py --output rebuilt`
 runs every release reconstruction below and compares every CSV row, identity,
 missing value and numeric field with its frozen reference, at absolute tolerance
 `1e-12`, zero relative tolerance. A changed row population fails verification.
@@ -23,6 +26,7 @@ missing value and numeric field with its frozen reference, at absolute tolerance
 | Historical paired batch uncertainty | `scripts/replay_historical_uncertainty.py --output rebuilt/historical_uncertainty` | `data/heldout/{runs,metrics}.csv` | Both `data/historical_uncertainty/*.csv` |
 | Manuscript number ledgers, historical and revision | `scripts/verify_paper_numbers.py --report rebuilt/historical_claims.csv` | `paper/`, historical score records, `data/campaign450`, `data/historical_uncertainty`, `experiments/four405`, configs and source contracts | Printed precision and explicit discrepancy ledger |
 | Matched-tradeoffs figure (revised manuscript Figure 3) | `scripts/make_fig3_matched_tradeoffs.py --output-dir rebuilt/figures` | `experiments/four405/evidence/new405/arm_summary.csv`, `data/campaign450/arm_summary.csv` | Plotted values are the ledger-checked Table 4, S11 and S14 means |
+| 405-record follow-up and preserved controls | `experiments/four405/replay.py` and its `scripts/replay_old450.py` and `scripts/verify_release.py`, invoked by the top-level verifier | `experiments/four405/evidence/` | Batch means, summaries, 222 complete-panel intervals, 420 endpoint-specific intervals and seven full-table comparisons |
 | Historical quantitative figures | `scripts/build_paper_figures.py --output-dir rebuilt/figures` | Historical score records and Villani predictions | Numerical values checked by the historical ledger; PDF/PNG rendering is exercised, not compared pixelwise |
 
 The four historical ledgers contain 5,207 entries whose locations follow the
@@ -31,10 +35,11 @@ the revised manuscript: Tables 4 and 5, Tables S10–S16 and the revised prose,
 evaluated against `data/campaign450`, `data/historical_uncertainty` and
 `experiments/four405`. All 8,582 entries match and `paper/known_discrepancies.csv`
 is empty. `scripts/build_revision_ledger.py` records how the revision ledger was
-derived from the LaTeX sources, which are not distributed; it copies each printed
-string from the source and never recomputes it. Counting entries is not a
-token-coverage assertion for the manuscript. No test here establishes independent
-scientific validation.
+derived from external LaTeX sources. Table rows are parsed from their labeled
+bodies; prose templates are bound to numeric tokens within the named section,
+with token boundaries checked. A changed per-section/table claim count fails
+before writing the ledger. Source comparison is optional and requires the author's
+external manuscript files; no manuscript is distributed with the code.
 
 ## Populations, controls and uncertainty
 
